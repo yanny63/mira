@@ -1,0 +1,2 @@
+const var hello_world = 20 + 10
+emit(hello_world) 
