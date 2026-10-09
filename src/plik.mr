@@ -1,2 +1,7 @@
-const var hello_world = 20 + 10
-emit(hello_world) 
+var stringa = "xd"
+var string = "x"
+if (stringa == string) {
+    emit("true!")
+} else {
+    emit("false!")
+}

@@ -56,6 +56,20 @@ Token Lexer::readIdentifier() {
             identifier
         };
     }
+
+    if (identifier == "if") {
+        return {
+            TokenType::IfStatement,
+            identifier
+        };
+    }
+
+    if (identifier == "else") {
+        return {
+            TokenType::ElseStatement,
+            identifier
+        };
+    }
     // default return (variables etc)
     return {
         TokenType::Identifier,
@@ -112,9 +126,14 @@ std::vector<Token> Lexer::tokenize() {
         }
 
         switch (current) 
-        {
+        {   
             case '=':
                 position++;
+                if (source[position++] == '=') {
+                    tokens.push_back({TokenType::IsEqual, "=="});
+                    position++;
+                    break;
+                }
                 tokens.push_back({TokenType::Equal, "="});
                 break;
             case '+':
@@ -137,6 +156,32 @@ std::vector<Token> Lexer::tokenize() {
                 position++;
                 tokens.push_back({TokenType::Percent, "%"});
                 break;
+            case '!':
+                position++;
+                if (source[position] == '=') {
+                    tokens.push_back({TokenType::NotEqual, "!="});
+                    position++;
+                    break;
+                }
+                break;
+            case '<':
+                position++;
+                if (source[position] == '=') {
+                    tokens.push_back({TokenType::LessEqual, "<="});
+                    position++;
+                    break;
+                }
+                tokens.push_back({TokenType::Less, "<"});
+                break;
+            case '>':
+                position++;
+                if (source[position] == '=') {
+                    tokens.push_back({TokenType::GreaterEqual, ">="});
+                    position++;
+                    break;
+                }
+                tokens.push_back({TokenType::Greater, ">"});
+                break;
             case '(':
                 position++;
                 tokens.push_back({TokenType::LeftParenthesis, "("});
@@ -144,6 +189,14 @@ std::vector<Token> Lexer::tokenize() {
             case ')':
                 position++;
                 tokens.push_back({TokenType::RightParenthesis, ")"});
+                break;
+            case '{':
+                position++;
+                tokens.push_back({TokenType::LeftBrace, "{"});
+                break;
+            case '}':
+                position++;
+                tokens.push_back({TokenType::RightBrace, "}"});
                 break;
             default:
                 std::cerr << "Unknown character: " << current << '\n';

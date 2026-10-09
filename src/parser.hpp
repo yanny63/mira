@@ -28,11 +28,21 @@ class Parser {
 
     std::unique_ptr<Statement> parseEmit();
 
+    std::unique_ptr<Statement> parseIf();
+    std::vector<std::unique_ptr<Statement>> parseElse();
+
     std::unique_ptr<Expr> parseString();
 
-    std::unique_ptr<Expr> parseExpresion();
+    std::unique_ptr<Expr> parseExpression();
+
+    bool checkEqualityOperator();
+    bool checkRelationalOperator();
+
+    std::unique_ptr<Expr> parseEquality();
 
     std::unique_ptr<Statement> parseVariableDeclaration();
+
+    std::vector<std::unique_ptr<Statement>> parseBlock();
 
     public:
     std::vector<std::unique_ptr<Statement>> parse();

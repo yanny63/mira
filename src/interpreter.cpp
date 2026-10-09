@@ -24,46 +24,60 @@ Value Interpreter::evaluate(const Expr& e) {
             using R = std::decay_t<decltype(r)>;
 
             if constexpr (std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
-                switch (expr->op) {
-                    case '+':
-                        return l + r;
-                    case '-':
-                        return l - r;
-                    case '*':
-                        return l * r;
-                    case '/':
-                        if (r == 0) {
-                            throw std::runtime_error("Can't divide by 0");
-                        }
-                        return l / r;
-                    case '%':
-                        if (r == 0) {
-                            throw std::runtime_error("Can't divide by 0");
-                        }
-                        return std::fmod(l, r);
-                    default:
-                        throw std::runtime_error("Unknown operator");
+                std::string opr = expr->op;
+                if (opr == "==") {
+                    return l == r;
+                } else if (opr == "!=") {
+                    return l != r;
+                } else if (opr == ">=") {
+                    return l >= r;
+                } else if (opr == ">") {
+                    return l > r;
+                } else if (opr == "<=") {
+                    return l <= r;
+                } else if (opr == "<") {
+                    return l < r;
+                } else if (opr == "+") {
+                    return l + r;
+                } else if (opr == "-") {
+                    return l - r;
+                } else if (opr == "*") {
+                    return l * r;
+                } else if (opr == "/") {
+                    if (r == 0) {
+                        throw std::runtime_error("Can't divide by 0");
+                    }
+                    return l / r;
+                } else if (opr == "%") {
+                    if (r == 0) {
+                        throw std::runtime_error("Can't divide by 0");
+                    }
+                    return std::fmod(l, r);
+                } else {
+                    throw std::runtime_error("Unknown operator");
                 }
             }
 
             else if constexpr (std::is_same_v<L, std::string> && std::is_arithmetic_v<R>) {
-                if (expr->op == '+') {
+                if (expr->op == "+") {
                     return l + std::to_string(r);
                 }
                 throw std::runtime_error("Invalid operation between string and number");
             }
 
             else if constexpr (std::is_same_v<R, std::string> && std::is_arithmetic_v<L>) {
-                if (expr->op == '+') {
+                if (expr->op == "+") {
                     return std::to_string(l) + r;
                 }
                 throw std::runtime_error("Invalid operation between string and number");
             }
 
             else if constexpr (std::is_same_v<L, std::string> && std::is_same_v<R, std::string>) {
-                if (expr->op == '+') {
+                if (expr->op == "+") {
                     return l + r;
-                } 
+                } else if (expr->op == "==") {
+                    return l == r;
+                }
                 throw std::runtime_error("Invalid operator for strings");
             }
 
@@ -102,6 +116,20 @@ void Interpreter::execute(const std::vector<std::unique_ptr<Statement>>& stateme
 
             std::cout << '\n';
         }
+
+        else if (auto statement = dynamic_cast<const IfStatement*>(e.get())) {
+            Value condition = evaluate(*statement->condition);
+            if (std::holds_alternative<bool>(condition)) {
+                if (std::get<bool>(condition)) {
+                    execute(statement->instructions);
+                } else {
+                    execute(statement->elseInstructions);
+                }
+            } else {
+                execute(statement->instructions);
+            }
+        }
+
         else {
             throw std::runtime_error("Unknown statement");
         }

@@ -7,7 +7,9 @@ enum class TokenType {
     Var,
 
     Emit,
-    Func,
+    Fn,
+    IfStatement,
+    ElseStatement,
 
     Variable,
     Identifier,
@@ -16,6 +18,12 @@ enum class TokenType {
     String,
 
     Equal,
+    IsEqual,
+    NotEqual,
+    LessEqual,
+    Less,
+    Greater,
+    GreaterEqual,
     Plus,
     Minus,
     Slash,
@@ -24,6 +32,8 @@ enum class TokenType {
 
     LeftParenthesis,
     RightParenthesis,
+    LeftBrace,
+    RightBrace,
 
     Eof, 
 };

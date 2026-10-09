@@ -48,7 +48,7 @@ std::unique_ptr<Expr> Parser::primary()
     if (checkType(TokenType::LeftParenthesis))
     {
         advance();
-        auto expression = parseExpresion();
+        auto expression = parseEquality();
         consume(TokenType::RightParenthesis);
         return expression;
     }
@@ -68,7 +68,7 @@ std::unique_ptr<Expr> Parser::multiplication() {
         auto right = primary();
 
         left = std::make_unique<BinaryExpr>(
-            op.value[0],
+            op.value,
             std::move(left),
             std::move(right)
         );
@@ -83,9 +83,31 @@ std::unique_ptr<Expr> Parser::addition() {
     while (checkType(TokenType::Plus) || checkType(TokenType::Minus)) {
         Token op = advance();
         auto right = multiplication();
-
+        
         left = std::make_unique<BinaryExpr>(
-            op.value[0],
+            op.value,
+            std::move(left),
+            std::move(right)
+        );
+    }
+    return left;
+}
+
+bool Parser::checkEqualityOperator() {
+    return checkType(TokenType::IsEqual) || checkType(TokenType::NotEqual);
+}
+bool Parser::checkRelationalOperator() {
+    return checkType(TokenType::LessEqual) || checkType(TokenType::GreaterEqual) 
+    || checkType(TokenType::Greater) || checkType(TokenType::Less);
+}
+
+std::unique_ptr<Expr> Parser::parseEquality() {
+    auto left = addition();
+    while (checkEqualityOperator() || checkRelationalOperator()) {
+        auto op = advance();
+        auto right = addition();
+        return std::make_unique<BinaryExpr>(
+            op.value,
             std::move(left),
             std::move(right)
         );
@@ -96,14 +118,33 @@ std::unique_ptr<Expr> Parser::addition() {
 std::unique_ptr<Statement> Parser::parseEmit() {
     consume(TokenType::Emit);
     consume(TokenType::LeftParenthesis);
-    auto expression = parseExpresion();
+    auto expression = parseEquality();
     consume(TokenType::RightParenthesis);
 
     return std::make_unique<EmitStatement>(std::move(expression));
 };
 
-std::unique_ptr<Expr> Parser::parseExpresion() {
-    return addition();
+std::unique_ptr<Statement> Parser::parseIf() {
+    consume(TokenType::IfStatement);
+    consume(TokenType::LeftParenthesis);
+    auto condition = parseEquality();
+    consume(TokenType::RightParenthesis);
+    consume(TokenType::LeftBrace);
+    auto instructions = parseBlock();
+    auto ifS = std::make_unique<IfStatement>(std::move(condition));
+    ifS->instructions = std::move(instructions);
+    if (checkType(TokenType::ElseStatement)) {
+        auto elseInstructions = parseElse();
+        ifS->elseInstructions = std::move(elseInstructions);
+    }
+    return ifS;
+}
+
+std::vector<std::unique_ptr<Statement>> Parser::parseElse() {
+    advance();
+    consume(TokenType::LeftBrace);
+    auto instructions = parseBlock();
+    return instructions;
 }
 
 std::unique_ptr<Statement> Parser::parseVariableDeclaration()
@@ -122,13 +163,41 @@ std::unique_ptr<Statement> Parser::parseVariableDeclaration()
 
     consume(TokenType::Equal);
 
-    auto value = parseExpresion();
+    auto value = parseEquality();
 
     return std::make_unique<VarDeclaration>(
         name,
         std::move(value),
         isConst
     );
+}
+
+std::vector<std::unique_ptr<Statement>> Parser::parseBlock() {
+    std::vector<std::unique_ptr<Statement>> instructions;
+
+    while (current < tokens.size()) {
+        if (checkType(TokenType::ConstVar) || checkType(TokenType::Var)) {
+            instructions.push_back(std::move(parseVariableDeclaration()));
+        }
+
+        else if (checkType(TokenType::Emit)) {
+            instructions.push_back(std::move(parseEmit()));
+        }
+
+        else if (checkType(TokenType::IfStatement)) {
+            instructions.push_back(std::move(parseIf()));
+        }
+
+        else if (checkType(TokenType::RightBrace)) {
+            advance();
+            break;
+        }
+
+        else {
+            throw std::runtime_error("Expected Statement");
+        }
+    }
+    return instructions;
 }
 
 std::vector<std::unique_ptr<Statement>> Parser::parse() {
@@ -142,6 +211,11 @@ std::vector<std::unique_ptr<Statement>> Parser::parse() {
         else if (checkType(TokenType::Emit)) {
             statements.push_back(std::move(parseEmit()));
         }
+
+        else if (checkType(TokenType::IfStatement)) {
+            statements.push_back(std::move(parseIf()));
+        }
+
         else if (checkType(TokenType::Eof)) {
             break;
         }

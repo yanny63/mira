@@ -3,6 +3,7 @@
 #include "token.hpp"
 #include <memory>
 #include <variant>
+#include <vector>
 
 using Value = std::variant<std::string, double, int, bool>;
 
@@ -11,10 +12,10 @@ struct Expr {
 };
 
 struct BinaryExpr : Expr {
-    char op;
+    std::string op;
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> right;
-    BinaryExpr(char op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right) : op(op), left(std::move(left)), right(std::move(right)) {};
+    BinaryExpr(std::string op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right) : op(op), left(std::move(left)), right(std::move(right)) {};
 };
 
 struct StringExpr : Expr {
@@ -52,7 +53,19 @@ struct VarDeclaration : Statement {
 struct EmitStatement : Statement {
     std::unique_ptr<Expr> expression;
 
-    EmitStatement(std::unique_ptr<Expr> expression) : expression(std::move(expression)) {}
+    EmitStatement(std::unique_ptr<Expr> expression) : expression(std::move(expression)) {};
+};
+
+struct IfStatement : Statement {
+    std::unique_ptr<Expr> condition;
+    std::vector<std::unique_ptr<Statement>> instructions;
+    std::vector<std::unique_ptr<Statement>> elseInstructions;
+    IfStatement(std::unique_ptr<Expr> condition) : condition(std::move(condition)) {};
+};
+
+struct EvalStatement : Statement {
+    std::unique_ptr<Expr> expression;
+    EvalStatement(std::unique_ptr<Expr> expression) : expression(std::move(expression)) {};
 };
 
 struct Variable {
