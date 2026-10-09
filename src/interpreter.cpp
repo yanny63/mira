@@ -12,7 +12,11 @@ Value Interpreter::evaluate(const Expr& e) {
     }
 
     if (auto expr = dynamic_cast<const VarExpr*>(&e)) {
-        return variables.at(expr->var).value;
+        try {
+            return variables.at(expr->var).value;
+        } catch (std::out_of_range) {
+            throw std::runtime_error("Undefined variable '" + expr->var + "'");
+        }
     }
 
     if (auto expr = dynamic_cast<const BinaryExpr*>(&e)) {
@@ -123,7 +127,24 @@ void Interpreter::execute(const std::vector<std::unique_ptr<Statement>>& stateme
                 if (std::get<bool>(condition)) {
                     execute(statement->instructions);
                 } else {
-                    execute(statement->elseInstructions);
+                    bool flag = false;
+                    for (const auto& elseIfBranch : statement->elseIfBranches) {
+                        if (flag) break;
+                        Value condition = evaluate(*elseIfBranch->condition);
+                        if (std::holds_alternative<bool>(condition)) {
+                            if (std::get<bool>(condition)) {
+                                execute(elseIfBranch->instructions);
+                                flag = true;
+                                break;
+                            }
+                        } else {
+                            flag = true;
+                            execute(elseIfBranch->instructions);
+                        }
+                    }
+                    if (!flag) {
+                        execute(statement->elseInstructions);
+                    }
                 }
             } else {
                 execute(statement->instructions);

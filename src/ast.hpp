@@ -56,9 +56,15 @@ struct EmitStatement : Statement {
     EmitStatement(std::unique_ptr<Expr> expression) : expression(std::move(expression)) {};
 };
 
+struct ElseIfBranch {
+    std::unique_ptr<Expr> condition;
+    std::vector<std::unique_ptr<Statement>> instructions;
+};
+
 struct IfStatement : Statement {
     std::unique_ptr<Expr> condition;
     std::vector<std::unique_ptr<Statement>> instructions;
+    std::vector<std::unique_ptr<ElseIfBranch>> elseIfBranches;
     std::vector<std::unique_ptr<Statement>> elseInstructions;
     IfStatement(std::unique_ptr<Expr> condition) : condition(std::move(condition)) {};
 };

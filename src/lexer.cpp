@@ -129,7 +129,7 @@ std::vector<Token> Lexer::tokenize() {
         {   
             case '=':
                 position++;
-                if (source[position++] == '=') {
+                if (source[position] == '=') {
                     tokens.push_back({TokenType::IsEqual, "=="});
                     position++;
                     break;

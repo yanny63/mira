@@ -11,6 +11,10 @@ Token& Parser::advance() {
     return tokens[current++];
 }
 
+Token& Parser::peek() {
+    return tokens[current + 1];
+}
+
 bool Parser::checkType(TokenType type) {
     return tokens[current].type == type;
 }
@@ -134,14 +138,39 @@ std::unique_ptr<Statement> Parser::parseIf() {
     auto ifS = std::make_unique<IfStatement>(std::move(condition));
     ifS->instructions = std::move(instructions);
     if (checkType(TokenType::ElseStatement)) {
-        auto elseInstructions = parseElse();
-        ifS->elseInstructions = std::move(elseInstructions);
+        if (peek().type == TokenType::IfStatement) {
+            std::vector<std::unique_ptr<ElseIfBranch>> eifv;
+
+            do {
+                consume(TokenType::ElseStatement);
+                if (!checkType(TokenType::IfStatement)) {
+                    auto elseInstructions = parseElse();
+                    ifS->elseInstructions = std::move(elseInstructions); 
+                    break;
+                }
+                consume(TokenType::IfStatement);
+                consume(TokenType::LeftParenthesis);
+                auto condition = parseEquality();
+                consume(TokenType::RightParenthesis);
+                consume(TokenType::LeftBrace);
+                auto instructions = parseBlock();
+                auto u = std::make_unique<ElseIfBranch>(std::move(condition), std::move(instructions));
+                eifv.push_back(std::move(u));
+            } while (checkType(TokenType::ElseStatement));
+
+            ifS->elseIfBranches = std::move(eifv);
+        } 
+        
+        else {
+            consume(TokenType::ElseStatement);
+            auto elseInstructions = parseElse();
+            ifS->elseInstructions = std::move(elseInstructions); 
+        }
     }
     return ifS;
 }
 
 std::vector<std::unique_ptr<Statement>> Parser::parseElse() {
-    advance();
     consume(TokenType::LeftBrace);
     auto instructions = parseBlock();
     return instructions;

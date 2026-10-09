@@ -17,6 +17,8 @@ class Parser {
 
     Token& advance();
 
+    Token& peek();
+
     bool checkType(TokenType type);
 
     Token consume(TokenType type);

@@ -1,7 +1,17 @@
 var stringa = "xd"
-var string = "x"
-if (stringa == string) {
-    emit("true!")
-} else {
-    emit("false!")
+var string = "xd"
+if (stringa == "x") {
+    emit("n!")
+} 
+else if (stringa == "d") {
+    emit("i!") 
+} 
+else if (stringa == "") {
+    emit("t!")
+}
+else if (hah) {
+    emit("hah")
+}
+else {
+    emit("f!")
 }
