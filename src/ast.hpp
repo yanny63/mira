@@ -18,6 +18,13 @@ struct BinaryExpr : Expr {
     BinaryExpr(std::string op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right) : op(op), left(std::move(left)), right(std::move(right)) {};
 };
 
+struct AssignmentExpr : Expr {
+    std::string op;
+    std::string variable;
+    std::unique_ptr<Expr> right;
+    AssignmentExpr(std::string op, std::string var, std::unique_ptr<Expr> right) : op(op), variable(var), right(std::move(right)) {};
+};
+
 struct StringExpr : Expr {
     std::string string;
     StringExpr(std::string string) : string(string) {};
@@ -72,6 +79,11 @@ struct IfStatement : Statement {
 struct EvalStatement : Statement {
     std::unique_ptr<Expr> expression;
     EvalStatement(std::unique_ptr<Expr> expression) : expression(std::move(expression)) {};
+};
+
+struct AssignmentStatement : Statement {
+    std::unique_ptr<Expr> expression;
+    AssignmentStatement(std::unique_ptr<Expr> e) : expression(std::move(e)) {};
 };
 
 struct Variable {

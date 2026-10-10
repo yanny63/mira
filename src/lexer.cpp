@@ -70,6 +70,13 @@ Token Lexer::readIdentifier() {
             identifier
         };
     }
+
+    if (identifier == "while") {
+        return {
+            TokenType::WhileStatement,
+            identifier
+        };
+    }
     // default return (variables etc)
     return {
         TokenType::Identifier,
@@ -81,7 +88,6 @@ Token Lexer::readString() {
     std::string string;
     
     position++;
-
     while (position < source.size() && source[position] != '"') {
         string += source[position];
         position++;
@@ -138,10 +144,30 @@ std::vector<Token> Lexer::tokenize() {
                 break;
             case '+':
                 position++;
+                if (source[position] == '=') {
+                    tokens.push_back({TokenType::PlusEqual, "+="});
+                    position++;
+                    break;
+                }
+                if (source[position] == '+') {
+                    tokens.push_back({TokenType::Increment, "++"});
+                    position++;
+                    break;
+                }
                 tokens.push_back({TokenType::Plus, "+"});
                 break;
             case '-':
                 position++;
+                if (source[position] == '=') {
+                    tokens.push_back({TokenType::MinusEqual, "-="});
+                    position++;
+                    break;
+                }
+                if (source[position] == '-') {
+                    tokens.push_back({TokenType::Decrement, "--"});
+                    position++;
+                    break;
+                }
                 tokens.push_back({TokenType::Minus, "-"});
                 break;
             case '*':

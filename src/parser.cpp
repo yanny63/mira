@@ -119,6 +119,24 @@ std::unique_ptr<Expr> Parser::parseEquality() {
     return left;
 }
 
+std::unique_ptr<Statement> Parser::parseAssignment() {
+    auto variable = consume(TokenType::Identifier);
+    if (checkType(TokenType::PlusEqual) || checkType(TokenType::MinusEqual) || checkType(TokenType::Equal)) {
+        auto opr = advance();
+        auto right = parseEquality();
+        auto expr = std::make_unique<AssignmentExpr>(opr.value, variable.value, std::move(right));
+        return std::make_unique<AssignmentStatement>(std::move(expr));
+    }
+
+    else if (checkType(TokenType::Increment) || checkType(TokenType::Decrement)) {
+        auto opr = advance();
+        auto expr = std::make_unique<AssignmentExpr>(opr.value, variable.value, nullptr);
+        return std::make_unique<AssignmentStatement>(std::move(expr));
+    }
+
+    else throw std::runtime_error("Unsupported assignment");
+}
+
 std::unique_ptr<Statement> Parser::parseEmit() {
     consume(TokenType::Emit);
     consume(TokenType::LeftParenthesis);
@@ -243,6 +261,10 @@ std::vector<std::unique_ptr<Statement>> Parser::parse() {
 
         else if (checkType(TokenType::IfStatement)) {
             statements.push_back(std::move(parseIf()));
+        }
+
+        else if (checkType(TokenType::Identifier)) {
+            statements.push_back(std::move(parseAssignment()));
         }
 
         else if (checkType(TokenType::Eof)) {

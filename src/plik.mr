@@ -1,17 +1,4 @@
-var stringa = "xd"
-var string = "xd"
-if (stringa == "x") {
-    emit("n!")
-} 
-else if (stringa == "d") {
-    emit("i!") 
-} 
-else if (stringa == "") {
-    emit("t!")
-}
-else if (hah) {
-    emit("hah")
-}
-else {
-    emit("f!")
-}
+var x = 1
+emit(x)
+x += 9
+emit(x)

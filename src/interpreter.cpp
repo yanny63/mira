@@ -7,6 +7,10 @@ Value Interpreter::evaluate(const Expr& e) {
         return expr->number;
     }
 
+    if (auto expr = dynamic_cast<const DoubleExpr*>(&e)) {
+        return expr->number;
+    }
+
     if (auto expr = dynamic_cast<const StringExpr*>(&e)) {
         return expr->string;
     }
@@ -16,6 +20,74 @@ Value Interpreter::evaluate(const Expr& e) {
             return variables.at(expr->var).value;
         } catch (std::out_of_range) {
             throw std::runtime_error("Undefined variable '" + expr->var + "'");
+        }
+    }
+
+    if (auto expr = dynamic_cast<const AssignmentExpr*>(&e)) {
+        std::string variable = expr->variable;
+
+        if (variables.at(variable).isConst) {
+            throw std::runtime_error("Cannot reassign constant variable '" + variable + "'");
+        }
+
+        std::string oper = expr->op;
+
+        if (oper == "++" || oper == "--") {
+            return std::visit([&](auto& var) -> Value {
+                using V = std::decay_t<decltype(var)>;
+                if constexpr (std::is_arithmetic_v<V>) {
+                    if (oper == "++") {
+                        return var += 1;
+                    } else if (oper == "--") {
+                        return var -= 1;
+                    } else {
+                        throw std::runtime_error("Unknown assignment");
+                    }
+                }
+                throw std::runtime_error("Increment and decrement operators require a numeric operand");
+            }, variables.at(variable).value);
+        }
+
+        if (expr->right == nullptr) {
+            throw std::runtime_error("Missing right operand");
+        }
+
+        Value right = evaluate(*expr->right);
+
+        try {
+            return std::visit([&](auto& v, const auto& r) -> Value {
+                using V = std::decay_t<decltype(v)>;
+                using R = std::decay_t<decltype(r)>;
+
+                if constexpr (std::is_arithmetic_v<V> && std::is_arithmetic_v<R>) {
+                    if (oper == "=") {
+                        return v = r;
+                    } else if (oper == "+=") {
+                        return v += r;
+                    } else if (oper == "-=") {
+                        return v -= r;
+                    } else {
+                        throw std::runtime_error("Operator '" + oper + "' is not supported for these operand types");
+                    }
+                }
+                
+                if constexpr (std::is_same_v<V, R>) {
+                    if (oper == "=") {
+                        return v = r;
+                    } else if constexpr (std::is_same_v<V, std::string> && std::is_same_v<R, std::string>) {
+                        if (oper == "+=") {
+                            return v += r;
+                        }
+                    } else {
+                        throw std::runtime_error("Operator '" + oper + "' is not supported for this type");
+                    }
+                } 
+
+                throw std::runtime_error("Cannot apply operator '" + oper + "' to operands of incompatible types");
+            }, variables.at(variable).value, right);
+            
+        } catch (std::out_of_range) {
+            throw std::runtime_error("Undefined variable '" + variable + "'");
         }
     }
 
@@ -149,6 +221,10 @@ void Interpreter::execute(const std::vector<std::unique_ptr<Statement>>& stateme
             } else {
                 execute(statement->instructions);
             }
+        }
+
+        else if (auto statement = dynamic_cast<const AssignmentStatement*>(e.get())) {
+            evaluate(*statement->expression);
         }
 
         else {

@@ -10,6 +10,7 @@ enum class TokenType {
     Fn,
     IfStatement,
     ElseStatement,
+    WhileStatement,
 
     Variable,
     Identifier,
@@ -29,6 +30,10 @@ enum class TokenType {
     Slash,
     Star,
     Percent,
+    PlusEqual,
+    Increment,
+    Decrement,
+    MinusEqual,
 
     LeftParenthesis,
     RightParenthesis,

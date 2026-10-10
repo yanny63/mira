@@ -42,6 +42,8 @@ class Parser {
 
     std::unique_ptr<Expr> parseEquality();
 
+    std::unique_ptr<Statement> parseAssignment();
+
     std::unique_ptr<Statement> parseVariableDeclaration();
 
     std::vector<std::unique_ptr<Statement>> parseBlock();
